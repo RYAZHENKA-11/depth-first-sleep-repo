@@ -1,0 +1,63 @@
+# ---- личное: заметки, ассистент, IDE ----
+PROJECT_NOTES.md
+.claude/
+CLAUDE.local.md
+.idea/
+.vscode/
+*.code-workspace
+*.swp
+*~
+
+# ---- ОС ----
+.DS_Store
+._*
+Thumbs.db
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# ---- colcon (сборка из корня репо) ----
+/build/
+/install/
+/log/
+
+# ---- данные: бэги, дампы, архивы ----
+bags/
+*.db3
+*.mcap
+*.bag
+*.pkl
+*.npz
+*.7z
+*.zip
+*.tar.gz
+
+# ---- логи и результаты прогонов ----
+*.log
+logs/
+result.json
+*.mp4
+*.orig
+
+# ---- Webots ----
+*.wbproj
+.*.wbproj
+**/worlds/.*.jpg
+**/controllers/*/runtime.ini
+.ros-ros/
+
+# ---- секреты: VPN, SSH, ключи робота ----
+*.ovpn
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+aes_key
+.env
+.env.*

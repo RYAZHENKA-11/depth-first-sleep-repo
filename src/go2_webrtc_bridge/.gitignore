@@ -1,0 +1,11 @@
+# Recorder dumps: ~1.1 GB of raw input data, not source.
+backup_code/*.pkl
+backup_code/*.npz
+backup_code/*.bag
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/

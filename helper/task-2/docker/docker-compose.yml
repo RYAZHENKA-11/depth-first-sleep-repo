@@ -1,0 +1,27 @@
+x-common: &common
+  image: task2:local
+  build:
+    context: .
+  network_mode: host
+  ipc: host
+  stdin_open: true
+  tty: true
+  environment:
+    - DISPLAY=${DISPLAY:-:0}
+    - QT_X11_NO_MITSHM=1
+    - XAUTHORITY=/tmp/.Xauthority
+  volumes:
+    - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    - ${XAUTHORITY:-$HOME/.Xauthority}:/tmp/.Xauthority:ro
+    - ../:/workspace:rw
+
+services:
+  nav2:
+    <<: *common
+    command: bash -c "source /opt/ros/humble/setup.bash && ros2 launch /workspace/controllers/participant/nav2_launch.py use_sim_time:=false"
+  slam:
+    <<: *common
+    command: bash -c "source /opt/ros/humble/setup.bash && ros2 launch /workspace/controllers/participant/slam_launch.py use_sim_time:=false"
+  rviz:
+    <<: *common
+    command: bash -c "source /opt/ros/humble/setup.bash && rviz2 -d /workspace/controllers/participant/rviz_config.rviz"

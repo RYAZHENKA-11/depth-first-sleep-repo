@@ -1,0 +1,155 @@
+{
+  "level": 2,
+  "name": "Slalom & Maze",
+  "robot_def": "ROBOT",
+  "body_def": "BODY",
+  "checkpoints": [
+    {
+      "name": "cp1",
+      "def": "CP1",
+      "x": 2.6,
+      "y": 0.0,
+      "radius": 0.45,
+      "points": 10
+    },
+    {
+      "name": "cp2",
+      "def": "CP2",
+      "x": 5.2,
+      "y": 0.0,
+      "radius": 0.4,
+      "points": 10
+    },
+    {
+      "name": "cp3",
+      "def": "CP3",
+      "x": 7.8,
+      "y": 0.0,
+      "radius": 0.4,
+      "points": 10
+    },
+    {
+      "name": "cp4",
+      "def": "CP4",
+      "x": 10.4,
+      "y": 1.3,
+      "radius": 0.4,
+      "points": 10
+    },
+    {
+      "name": "cp5",
+      "def": "CP5",
+      "x": 13.0,
+      "y": 1.3,
+      "radius": 0.4,
+      "points": 10
+    },
+    {
+      "name": "cp6",
+      "def": "CP6",
+      "x": 15.5,
+      "y": 1.3,
+      "radius": 0.4,
+      "points": 10
+    },
+    {
+      "name": "cp7",
+      "def": "CP7",
+      "x": 18.1,
+      "y": 1.3,
+      "radius": 0.4,
+      "points": 10
+    },
+    {
+      "name": "cp8",
+      "def": "CP8",
+      "x": 20.7,
+      "y": 0.6,
+      "radius": 0.4,
+      "points": 10
+    },
+    {
+      "name": "cp9",
+      "def": "CP9",
+      "x": 23.3,
+      "y": 1.3,
+      "radius": 0.4,
+      "points": 10
+    },
+    {
+      "name": "cp10",
+      "def": "CP10",
+      "x": 25.8,
+      "y": -0.9,
+      "radius": 0.4,
+      "points": 10
+    },
+    {
+      "name": "cp11",
+      "def": "CP11",
+      "x": 28.4,
+      "y": -1.0,
+      "radius": 0.4,
+      "points": 10
+    }
+  ],
+  "finish": {
+    "name": "finish",
+    "def": "FINISH",
+    "x": 31.0,
+    "y": -0.75,
+    "radius": 0.3,
+    "points": 10,
+    "hold_s": 3.0
+  },
+  "scoring": {
+    "completion_bonus_pct": 30
+  },
+  "timeouts": {
+    "sim_time_s": 600,
+    "wall_clock_s": 1800
+  },
+  "fall": {
+    "z_min": 0.12,
+    "tilt_max_deg": 55
+  },
+  "record_video": false,
+  "result_path": "result.json",
+  "checkpoint_order": "any",
+  "manipulation": {
+    "tasks": [
+      {
+        "name": "ball_red",
+        "object_def": "BALL_R",
+        "x": 2.2,
+        "y": 2.3,
+        "radius": 0.1,
+        "z_min": 0.22,
+        "z_max": 0.55,
+        "points": 10
+      },
+      {
+        "name": "ball_green",
+        "object_def": "BALL_G",
+        "x": 2.04,
+        "y": 2.3,
+        "radius": 0.1,
+        "z_min": 0.22,
+        "z_max": 0.55,
+        "points": 10
+      },
+      {
+        "name": "ball_blue",
+        "object_def": "BALL_B",
+        "x": 2.36,
+        "y": 2.3,
+        "radius": 0.1,
+        "z_min": 0.22,
+        "z_max": 0.55,
+        "points": 10
+      }
+    ],
+    "door_def": "DOOR",
+    "door_drop": 0.62
+  }
+}

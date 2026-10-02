@@ -1,0 +1,6 @@
+# Стек управления Unitree Go2 по WebRTC (наш дашборд + скрипты 01/02/03).
+# Один пакет тянет транзитивно aiortc/av/cryptography/numpy/… — прибит к коммиту
+# для детерминизма (проверено вживую на Python 3.14 / arm64, wheels ставятся без сборки).
+unitree_webrtc_connect @ git+https://github.com/legion1581/go2_webrtc_connect.git@611ea37
+# Pillow — JPEG-энкод кадров камеры собаки (arm64/py3.14 — колесо ставится без сборки)
+Pillow>=11.0

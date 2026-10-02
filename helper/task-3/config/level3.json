@@ -1,0 +1,70 @@
+{
+  "level": 3,
+  "name": "The Gauntlet",
+  "robot_def": "ROBOT",
+  "body_def": "BODY",
+  "checkpoints": [
+    {
+      "name": "cp1",
+      "def": "CP1",
+      "x": 5.0,
+      "y": 0.0,
+      "radius": 0.4,
+      "points": 10
+    },
+    {
+      "name": "cp2",
+      "def": "CP2",
+      "x": 6.1,
+      "y": 2.0,
+      "radius": 0.4,
+      "points": 15
+    },
+    {
+      "name": "cp3",
+      "def": "CP3",
+      "x": 6.1,
+      "y": 4.6,
+      "radius": 0.4,
+      "points": 20
+    }
+  ],
+  "finish": {
+    "name": "finish",
+    "def": "FINISH",
+    "x": 6.1,
+    "y": 5.8,
+    "radius": 0.3,
+    "points": 10,
+    "hold_s": 3.0
+  },
+  "scoring": {
+    "completion_bonus_pct": 40
+  },
+  "timeouts": {
+    "sim_time_s": 300,
+    "wall_clock_s": 1000
+  },
+  "fall": {
+    "z_min": 0.12,
+    "tilt_max_deg": 55
+  },
+  "record_video": false,
+  "result_path": "result.json",
+  "manipulation": {
+    "tasks": [
+      {
+        "name": "key_in_socket",
+        "object_def": "KEY",
+        "x": 7.8,
+        "y": 3.4,
+        "radius": 0.1,
+        "z_min": 0.25,
+        "z_max": 0.6,
+        "points": 20
+      }
+    ],
+    "door_def": "DOOR",
+    "door_drop": 0.62
+  }
+}

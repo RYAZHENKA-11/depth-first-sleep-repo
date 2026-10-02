@@ -1,0 +1,59 @@
+go2_webrtc_bridge:
+  ros__parameters:
+    # Go2 connection
+    robot_ip: "192.168.8.181"
+    connection_method: "LocalSTA"
+    serial_number: ""
+    aes_128_key: ""
+    region: "global"
+    device_type: "Go2"
+
+    # LiDAR
+    lidar_auto_enable: false
+    lidar_decoder: "native"
+    enable_slam_subscriptions: true
+    # The utlidar voxel_map already arrives in "odom"; keep its frame_id.
+    lidar_use_payload_frame: true
+
+    # Where /go2/imu/data comes from. SportModState is the only topic whose
+    # imu_state carries the full quaternion + gyroscope + accelerometer set;
+    # lowstate carries rpy only.
+    imu_source: "sport"   # sport | lowstate | both
+
+    # Frames. SportModState.velocity / yaw_speed are body-frame, and
+    # nav_msgs/Odometry expects the twist in child_frame_id, so base_frame is
+    # the frame those twists are expressed in. Keep these consistent with the
+    # rest of your TF tree.
+    base_frame: "base_link"
+
+    # Safety: keep false during bring-up.
+    enable_cmd_vel: false
+    cmd_vel_timeout: 0.5
+    max_cmd_vx: 1.0
+    max_cmd_vy: 1.0
+    max_cmd_wz: 2.0
+
+    # TF frames used by typed outputs.
+    imu_frame: "imu_link"
+    # Only a fallback: the cloud keeps its own frame_id ("odom") unless
+    # lidar_use_payload_frame is false.
+    lidar_frame: "lidar_link"
+
+    # ---- Recording fidelity (/go2/raw/... only, typed topics unaffected) ----
+    #
+    # true  = every ndarray is written out in full. This is what you want for a
+    #         recording run: the alternative replaces the utlidar voxel-map point
+    #         array with a shape-only stub, i.e. it deletes the whole LiDAR
+    #         stream (measured 215 B recorded instead of 1.46 MB per message).
+    # false = arrays over raw_array_limit are stubbed to dtype/shape/size.
+    #         ~253 B per cloud instead of ~1.47 MB, and everything except the
+    #         points themselves is still recorded.
+    publish_full_arrays: true
+    raw_array_limit: 4096
+    # Top-level payload keys to drop from /go2/raw/... .
+    # motor_state is 1105 of LOW_STATE's 1358 bytes and carries no velocity, so
+    # dropping it costs ~0.4% of the total volume. Joint positions stay
+    # available in full on the typed /go2/joint_states topic. Set to [] to keep
+    # everything in the raw channel too.
+    exclude_raw_fields:
+      - motor_state

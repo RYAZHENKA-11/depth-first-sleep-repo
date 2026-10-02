@@ -1,0 +1,358 @@
+#VRML_SIM R2025a utf8
+# Go2 competition — Level 2 "Slalom & Maze" (medium).
+# Course: start → 3-pole slalom → cp1 → FULL-SIZE MAZE (16×12, cell 1.5 m, with dead ends) →
+# more checkpoints scattered through the maze → exit → finish.
+# Same fixed robot/referee as Level 1; only the obstacles + config change.
+
+EXTERNPROTO "../common/protos/Go2.proto"
+EXTERNPROTO "../common/protos/Checkpoint.proto"
+EXTERNPROTO "../common/protos/Wall.proto"
+EXTERNPROTO "../common/protos/Pole.proto"
+EXTERNPROTO "../common/protos/Ball.proto"
+EXTERNPROTO "../common/protos/ArmStation.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/toys/protos/RubberDuck.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/factory/containers/protos/PlasticCrate.proto"
+
+# Physics = EXACTLY our verified reference physics (the firmware MNN policy walks
+# stably on it): timestep 4 ms, friction 1.3, no damping/CFM overrides. Do not tweak.
+WorldInfo {
+  basicTimeStep 4
+  contactProperties [
+    ContactProperties {
+      material1 "default"
+      material2 "ground"
+      coulombFriction [ 1.3 ]
+      bounce 0
+    }
+  ]
+}
+Viewpoint {
+  orientation -0.32 0.31 0.9 1.66
+  position 0.2 -3.8 3.0
+  follow "Go2"
+  followType "Tracking Shot"
+  followSmoothness 0.35
+}
+TexturedBackground { texture "factory" }
+TexturedBackgroundLight { texture "factory" luminosity 1.6 }
+DirectionalLight { direction 0.6 -1 -0.9 intensity 2.2 castShadows TRUE }
+
+DEF FLOOR Solid {
+  translation 16.45 0.9 -0.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColorMap ImageTexture { url [ "../common/protos/textures/Checker.png" ] }
+        textureTransform TextureTransform { scale 21 14 }
+        roughness 0.6
+        metalness 0.0
+      }
+      geometry Box { size 41.5 27.6 1 }
+    }
+  ]
+  boundingObject Box { size 41.5 27.6 1 }
+  contactMaterial "ground"
+}
+
+# ── participant robot (controller swapped at judging) ──
+DEF ROBOT Go2 {
+  translation 0 0 0.34
+  rotation 0 0 1 0
+  name "Go2"
+  controller "participant"
+  supervisor FALSE
+}
+
+# ── referee (separate supervisor) ──
+DEF REF Robot {
+  name "referee"
+  controller "referee"
+  controllerArgs [ "../../config/level2.json" ]
+  supervisor TRUE
+}
+
+# ── slalom: three poles ALTERNATING sides → the robot weaves through with wide clearance ──
+Pole { translation 1.7 -0.45 0.4 name "slalom1" radius 0.15 height 0.8 }
+Pole { translation 3.1  0.45 0.4 name "slalom2" radius 0.15 height 0.8 }
+Pole { translation 4.5 -0.45 0.4 name "slalom3" radius 0.15 height 0.8 }
+
+# ══════════ SORTING STATION (task solved IN PARALLEL, remotely via robot.arm) ══════════
+# Stationary manipulator; tray S of it holds balls (S→N: red, green, blue), the slot stand
+# N of it has colour pads (S→N: blue, red, green). All three balls on matching pads → the
+# SECRET DOOR deep in the maze opens (a shortcut). Arm frame origin = pedestal centre.
+DEF ARM ArmStation { translation 2.2 2.0 0 name "arm_station" controllerArgs [ "BALL_R" "BALL_G" "BALL_B" ] }
+# RAISED tray (top z0.20) — balls sit at z0.26, at radius 0.28–0.52 from the arm (its comfortable
+# reach; balls near the pedestal would be inside the arm's fold limit and unreachable).
+DEF TRAY Solid {
+  translation 2.2 1.60 0
+  children [
+    Pose { translation 0 0 0.10 children [ Shape { appearance DEF TRAYAPP PBRAppearance { baseColor 0.35 0.30 0.22 roughness 0.8 } geometry Box { size 0.30 0.50 0.20 } } ] }
+    # shallow cups so the resting balls don't roll off the raised platform
+    Pose { translation 0 -0.12 0.21 children [ Shape { appearance USE TRAYAPP geometry Cylinder { radius 0.075 height 0.02 } } ] }
+    Pose { translation 0  0.00 0.21 children [ Shape { appearance USE TRAYAPP geometry Cylinder { radius 0.075 height 0.02 } } ] }
+    Pose { translation 0  0.12 0.21 children [ Shape { appearance USE TRAYAPP geometry Cylinder { radius 0.075 height 0.02 } } ] }
+  ]
+  name "tray"
+  boundingObject Pose { translation 0 0 0.10 children [ Box { size 0.30 0.50 0.20 } ] }
+}
+DEF BALL_R Ball { translation 2.2 1.48 0.26 color 0.90 0.10 0.10 name "ball_red" }
+DEF BALL_G Ball { translation 2.2 1.60 0.26 color 0.10 0.80 0.15 name "ball_green" }
+DEF BALL_B Ball { translation 2.2 1.72 0.26 color 0.12 0.30 0.95 name "ball_blue" }
+DEF SLOTS Solid {
+  translation 2.2 2.3 0
+  rotation 0 0 1 1.5708
+  children [
+    # solid platform (the ONLY collision) — the arm places a ball above a pad and it rests here
+    Pose { translation 0 0 0.11 children [ Shape { appearance DEF SLOTAPP PBRAppearance { baseColor 0.22 0.22 0.26 roughness 0.5 metalness 0.3 } geometry Box { size 0.26 0.54 0.22 } } ] }
+    # LOW cosmetic dividers (visual only — no collision — so the arm freely brings a ball over)
+    Pose { translation  0.125 0 0.245 children [ Shape { appearance USE SLOTAPP geometry Box { size 0.014 0.52 0.05 } } ] }
+    Pose { translation -0.125 0 0.245 children [ Shape { appearance USE SLOTAPP geometry Box { size 0.014 0.52 0.05 } } ] }
+    Pose { translation 0 -0.08 0.245 children [ Shape { appearance USE SLOTAPP geometry Box { size 0.26 0.014 0.05 } } ] }
+    Pose { translation 0  0.08 0.245 children [ Shape { appearance USE SLOTAPP geometry Box { size 0.26 0.014 0.05 } } ] }
+    # glowing colour pads (lifted above the platform top 0.22 → no z-fighting)
+    Pose { translation 0 -0.16 0.226 children [ Shape { appearance PBRAppearance { baseColor 0.12 0.30 0.95 emissiveColor 0.12 0.30 0.95 emissiveIntensity 0.6 roughness 0.4 } geometry Box { size 0.20 0.15 0.012 } } ] }
+    Pose { translation 0 0.00 0.226 children [ Shape { appearance PBRAppearance { baseColor 0.90 0.10 0.10 emissiveColor 0.90 0.10 0.10 emissiveIntensity 0.6 roughness 0.4 } geometry Box { size 0.20 0.15 0.012 } } ] }
+    Pose { translation 0 0.16 0.226 children [ Shape { appearance PBRAppearance { baseColor 0.10 0.80 0.15 emissiveColor 0.10 0.80 0.15 emissiveIntensity 0.6 roughness 0.4 } geometry Box { size 0.20 0.15 0.012 } } ] }
+  ]
+  name "slot_stand"
+  boundingObject Pose { translation 0 0 0.11 children [ Box { size 0.26 0.54 0.22 } ] }
+}
+
+
+
+
+# ── checkpoints ──
+DEF CP1 Checkpoint { translation 2.6 0 0.03 name "cp1" radius 0.45 color 0.95 0.85 0.1 }
+# 10 collectible checkpoints SCATTERED over the maze (same colour on purpose — their
+# placement deliberately does NOT trace the route; collect in ANY order, each +10)
+DEF CP2 Checkpoint { translation 5.2 0 0.03 name "cp2" radius 0.4 }
+DEF CP3 Checkpoint { translation 7.8 0 0.03 name "cp3" radius 0.4 }
+DEF CP4 Checkpoint { translation 10.4 1.3 0.03 name "cp4" radius 0.4 }
+DEF CP5 Checkpoint { translation 13 1.3 0.03 name "cp5" radius 0.4 }
+DEF CP6 Checkpoint { translation 15.5 1.3 0.03 name "cp6" radius 0.4 }
+DEF CP7 Checkpoint { translation 18.1 1.3 0.03 name "cp7" radius 0.4 }
+DEF CP8 Checkpoint { translation 20.7 0.6 0.03 name "cp8" radius 0.4 }
+DEF CP9 Checkpoint { translation 23.3 1.3 0.03 name "cp9" radius 0.4 }
+DEF CP10 Checkpoint { translation 25.8 -0.9 0.03 name "cp10" radius 0.4 }
+DEF CP11 Checkpoint { translation 28.4 -1 0.03 name "cp11" radius 0.4 }
+DEF FINISH Checkpoint { translation 31.0 -0.75 0.03 name "finish" radius 0.3 color 0.6 0.2 0.9 }
+
+# ── FULL-SIZE MAZE (16×12, cell 1.5 m; entry on the WEST side, exit on the EAST side;
+# corridors 1.4 m; a shortcut door opens when the sorting task is completed) ──
+  Wall { translation 34.65 8.4 0.25 size 1.5 0.1 0.5 name "gw0" }
+  Wall { translation 15.9 -7.35 0.25 size 0.1 1.5 0.5 name "gw1" }
+  Wall { translation 14.4 4.65 0.25 size 0.1 1.5 0.5 name "gw2" }
+  Wall { translation 36.15 -11.1 0.25 size 1.5 0.1 0.5 name "gw3" }
+  Wall { translation 16.65 6.9 0.25 size 1.5 0.1 0.5 name "gw4" }
+  Wall { translation 11.4 12.15 0.25 size 0.1 1.5 0.5 name "gw5" }
+  Wall { translation 17.4 -8.85 0.25 size 0.1 1.5 0.5 name "gw6" }
+  Wall { translation 6.15 -9.6 0.25 size 1.5 0.1 0.5 name "gw7" }
+  Wall { translation -2.1 7.65 0.25 size 0.1 1.5 0.5 name "gw8" }
+  Wall { translation 3.15 11.4 0.25 size 1.5 0.1 0.5 name "gw9" }
+  Wall { translation 1.65 -5.1 0.25 size 1.5 0.1 0.5 name "gw10" }
+  Wall { translation 15.15 0.9 0.25 size 1.5 0.1 0.5 name "gw11" }
+  Wall { translation 33.9 4.65 0.25 size 0.1 1.5 0.5 name "gw12" }
+  Wall { translation 17.4 0.15 0.25 size 0.1 1.5 0.5 name "gw13" }
+  Wall { translation 32.4 7.65 0.25 size 0.1 1.5 0.5 name "gw14" }
+  Wall { translation 8.4 3.15 0.25 size 0.1 1.5 0.5 name "gw15" }
+  Wall { translation 15.9 12.15 0.25 size 0.1 1.5 0.5 name "gw16" }
+  Wall { translation 30.15 12.9 0.25 size 1.5 0.1 0.5 name "gw17" }
+  Wall { translation 12.15 -6.6 0.25 size 1.5 0.1 0.5 name "gw18" }
+  Wall { translation 27.15 -0.6 0.25 size 1.5 0.1 0.5 name "gw19" }
+  Wall { translation 12.9 -2.85 0.25 size 0.1 1.5 0.5 name "gw20" }
+  Wall { translation 31.65 -11.1 0.25 size 1.5 0.1 0.5 name "gw21" }
+  Wall { translation 0.9 12.15 0.25 size 0.1 1.5 0.5 name "gw22" }
+  Wall { translation 34.65 -6.6 0.25 size 1.5 0.1 0.5 name "gw23" }
+  Wall { translation 3.15 3.9 0.25 size 1.5 0.1 0.5 name "gw24" }
+  Wall { translation 20.4 -7.35 0.25 size 0.1 1.5 0.5 name "gw25" }
+  Wall { translation 6.15 0.9 0.25 size 1.5 0.1 0.5 name "gw26" }
+  Wall { translation -2.1 0.15 0.25 size 0.1 1.5 0.5 name "gw27" }
+  Wall { translation 11.4 13.65 0.25 size 0.1 1.5 0.5 name "gw28" }
+  Wall { translation 18.9 1.65 0.25 size 0.1 1.5 0.5 name "gw29" }
+  Wall { translation 18.15 9.9 0.25 size 1.5 0.1 0.5 name "gw30" }
+  Wall { translation 4.65 11.4 0.25 size 1.5 0.1 0.5 name "gw31" }
+  Wall { translation 21.9 -4.35 0.25 size 0.1 1.5 0.5 name "gw32" }
+  Wall { translation 24.15 -3.6 0.25 size 1.5 0.1 0.5 name "gw33" }
+  Wall { translation 18.15 -0.6 0.25 size 1.5 0.1 0.5 name "gw34" }
+  Wall { translation 24.15 3.9 0.25 size 1.5 0.1 0.5 name "gw35" }
+  Wall { translation 9.9 -1.35 0.25 size 0.1 1.5 0.5 name "gw36" }
+  Wall { translation 9.15 5.4 0.25 size 1.5 0.1 0.5 name "gw37" }
+  Wall { translation 21.15 -5.1 0.25 size 1.5 0.1 0.5 name "gw38" }
+  Wall { translation 22.65 -9.6 0.25 size 1.5 0.1 0.5 name "gw39" }
+  Wall { translation 15.15 8.4 0.25 size 1.5 0.1 0.5 name "gw40" }
+  Wall { translation -0.6 -7.35 0.25 size 0.1 1.5 0.5 name "gw41" }
+  Wall { translation 13.65 -9.6 0.25 size 1.5 0.1 0.5 name "gw42" }
+  Wall { translation 25.65 9.9 0.25 size 1.5 0.1 0.5 name "gw43" }
+  Wall { translation 24.9 7.65 0.25 size 0.1 1.5 0.5 name "gw44" }
+  Wall { translation 10.65 -11.1 0.25 size 1.5 0.1 0.5 name "gw45" }
+  Wall { translation 22.65 0.9 0.25 size 1.5 0.1 0.5 name "gw46" }
+  Wall { translation 2.4 -2.85 0.25 size 0.1 1.5 0.5 name "gw47" }
+  Wall { translation 32.4 -1.35 0.25 size 0.1 1.5 0.5 name "gw48" }
+  Wall { translation -2.1 -10.35 0.25 size 0.1 1.5 0.5 name "gw49" }
+  Wall { translation 18.15 -11.1 0.25 size 1.5 0.1 0.5 name "gw50" }
+  Wall { translation 24.9 6.15 0.25 size 0.1 1.5 0.5 name "gw51" }
+  Wall { translation 23.4 -7.35 0.25 size 0.1 1.5 0.5 name "gw52" }
+  Wall { translation 12.15 3.9 0.25 size 1.5 0.1 0.5 name "gw53" }
+  Wall { translation 3.15 -8.1 0.25 size 1.5 0.1 0.5 name "gw54" }
+  Wall { translation 12.9 0.15 0.25 size 0.1 1.5 0.5 name "gw55" }
+  Wall { translation 24.9 0.15 0.25 size 0.1 1.5 0.5 name "gw56" }
+  Wall { translation 16.65 -3.6 0.25 size 1.5 0.1 0.5 name "gw57" }
+  Wall { translation 17.4 -1.35 0.25 size 0.1 1.5 0.5 name "gw58" }
+  Wall { translation 17.4 3.15 0.25 size 0.1 1.5 0.5 name "gw59" }
+  Wall { translation 29.4 13.65 0.25 size 0.1 1.5 0.5 name "gw60" }
+  Wall { translation 7.65 -2.1 0.25 size 1.5 0.1 0.5 name "gw61" }
+  Wall { translation -1.35 -2.1 0.25 size 1.5 0.1 0.5 name "gw62" }
+  Wall { translation 33.9 -5.85 0.25 size 0.1 1.5 0.5 name "gw63" }
+  Wall { translation 14.4 0.15 0.25 size 0.1 1.5 0.5 name "gw64" }
+  Wall { translation 27.15 -6.6 0.25 size 1.5 0.1 0.5 name "gw65" }
+  Wall { translation 34.65 -2.1 0.25 size 1.5 0.1 0.5 name "gw66" }
+  Wall { translation 16.65 11.4 0.25 size 1.5 0.1 0.5 name "gw67" }
+  Wall { translation 7.65 -0.6 0.25 size 1.5 0.1 0.5 name "gw68" }
+  Wall { translation 16.65 5.4 0.25 size 1.5 0.1 0.5 name "gw69" }
+  Wall { translation 11.4 -10.35 0.25 size 0.1 1.5 0.5 name "gw70" }
+  Wall { translation 29.4 9.15 0.25 size 0.1 1.5 0.5 name "gw71" }
+  Wall { translation 25.65 0.9 0.25 size 1.5 0.1 0.5 name "gw72" }
+  Wall { translation 7.65 5.4 0.25 size 1.5 0.1 0.5 name "gw73" }
+  Wall { translation 13.65 11.4 0.25 size 1.5 0.1 0.5 name "gw74" }
+  Wall { translation 24.9 1.65 0.25 size 0.1 1.5 0.5 name "gw75" }
+  Wall { translation 1.65 -11.1 0.25 size 1.5 0.1 0.5 name "gw76" }
+  Wall { translation 12.9 -5.85 0.25 size 0.1 1.5 0.5 name "gw77" }
+  Wall { translation 20.4 -10.35 0.25 size 0.1 1.5 0.5 name "gw78" }
+  Wall { translation 12.15 2.4 0.25 size 1.5 0.1 0.5 name "gw79" }
+  Wall { translation 12.9 7.65 0.25 size 0.1 1.5 0.5 name "gw80" }
+  Wall { translation 16.65 -5.1 0.25 size 1.5 0.1 0.5 name "gw81" }
+  Wall { translation 21.9 -1.35 0.25 size 0.1 1.5 0.5 name "gw82" }
+  Wall { translation 35.4 9.15 0.25 size 0.1 1.5 0.5 name "gw83" }
+  Wall { translation 12.15 -2.1 0.25 size 1.5 0.1 0.5 name "gw84" }
+  Wall { translation 17.4 7.65 0.25 size 0.1 1.5 0.5 name "gw85" }
+  Wall { translation 33.15 3.9 0.25 size 1.5 0.1 0.5 name "gw86" }
+  Wall { translation 25.65 -9.6 0.25 size 1.5 0.1 0.5 name "gw87" }
+  Wall { translation 23.4 6.15 0.25 size 0.1 1.5 0.5 name "gw88" }
+  Wall { translation -2.1 3.15 0.25 size 0.1 1.5 0.5 name "gw89" }
+  Wall { translation -0.6 -4.35 0.25 size 0.1 1.5 0.5 name "gw90" }
+  Wall { translation 27.9 1.65 0.25 size 0.1 1.5 0.5 name "gw91" }
+  Wall { translation 12.9 -7.35 0.25 size 0.1 1.5 0.5 name "gw92" }
+  Wall { translation 27.9 -10.35 0.25 size 0.1 1.5 0.5 name "gw93" }
+  Wall { translation 0.9 1.65 0.25 size 0.1 1.5 0.5 name "gw94" }
+  Wall { translation 12.15 -11.1 0.25 size 1.5 0.1 0.5 name "gw95" }
+  Wall { translation -1.35 9.9 0.25 size 1.5 0.1 0.5 name "gw96" }
+  Wall { translation 5.4 4.65 0.25 size 0.1 1.5 0.5 name "gw97" }
+  Wall { translation 9.15 12.9 0.25 size 1.5 0.1 0.5 name "gw98" }
+  Wall { translation 11.4 -4.35 0.25 size 0.1 1.5 0.5 name "gw99" }
+  Wall { translation 11.4 9.15 0.25 size 0.1 1.5 0.5 name "gw100" }
+  Wall { translation 10.65 3.9 0.25 size 1.5 0.1 0.5 name "gw101" }
+  Wall { translation 30.15 2.4 0.25 size 1.5 0.1 0.5 name "gw102" }
+  Wall { translation -1.35 -9.6 0.25 size 1.5 0.1 0.5 name "gw103" }
+  Wall { translation 31.65 12.9 0.25 size 1.5 0.1 0.5 name "gw104" }
+  Wall { translation 33.9 -8.85 0.25 size 0.1 1.5 0.5 name "gw105" }
+  Wall { translation 20.4 12.15 0.25 size 0.1 1.5 0.5 name "gw106" }
+  Wall { translation 22.65 3.9 0.25 size 1.5 0.1 0.5 name "gw107" }
+  Wall { translation 21.9 -8.85 0.25 size 0.1 1.5 0.5 name "gw108" }
+  Wall { translation 20.4 -8.85 0.25 size 0.1 1.5 0.5 name "gw109" }
+  Wall { translation 16.65 9.9 0.25 size 1.5 0.1 0.5 name "gw110" }
+  Wall { translation 36.15 -8.1 0.25 size 1.5 0.1 0.5 name "gw111" }
+  Wall { translation 7.65 2.4 0.25 size 1.5 0.1 0.5 name "gw112" }
+  Wall { translation 21.9 -10.35 0.25 size 0.1 1.5 0.5 name "gw113" }
+  Wall { translation 32.4 3.15 0.25 size 0.1 1.5 0.5 name "gw114" }
+  Wall { translation 9.9 3.15 0.25 size 0.1 1.5 0.5 name "gw115" }
+  Wall { translation 2.4 -11.85 0.25 size 0.1 1.5 0.5 name "gw116" }
+  Wall { translation 13.65 -5.1 0.25 size 1.5 0.1 0.5 name "gw117" }
+  Wall { translation 26.4 -4.35 0.25 size 0.1 1.5 0.5 name "gw118" }
+  Wall { translation -0.6 1.65 0.25 size 0.1 1.5 0.5 name "gw119" }
+  Wall { translation 33.9 -7.35 0.25 size 0.1 1.5 0.5 name "gw120" }
+  Wall { translation 3.15 -3.6 0.25 size 1.5 0.1 0.5 name "gw121" }
+  Wall { translation 4.65 -2.1 0.25 size 1.5 0.1 0.5 name "gw122" }
+  Wall { translation 28.65 8.4 0.25 size 1.5 0.1 0.5 name "gw123" }
+  Wall { translation -2.1 12.15 0.25 size 0.1 1.5 0.5 name "gw124" }
+  Wall { translation 27.15 2.4 0.25 size 1.5 0.1 0.5 name "gw125" }
+  Wall { translation 30.9 -7.35 0.25 size 0.1 1.5 0.5 name "gw126" }
+  Wall { translation 0.15 -2.1 0.25 size 1.5 0.1 0.5 name "gw127" }
+  Wall { translation 19.65 6.9 0.25 size 1.5 0.1 0.5 name "gw128" }
+  Wall { translation 14.4 -8.85 0.25 size 0.1 1.5 0.5 name "gw129" }
+  Wall { translation 24.9 -2.85 0.25 size 0.1 1.5 0.5 name "gw130" }
+  Wall { translation 22.65 2.4 0.25 size 1.5 0.1 0.5 name "gw131" }
+  Wall { translation -0.6 -10.35 0.25 size 0.1 1.5 0.5 name "gw132" }
+  Wall { translation 18.9 -7.35 0.25 size 0.1 1.5 0.5 name "gw133" }
+  Wall { translation 34.65 -9.6 0.25 size 1.5 0.1 0.5 name "gw134" }
+  Wall { translation -0.6 4.65 0.25 size 0.1 1.5 0.5 name "gw135" }
+  Wall { translation 27.15 -5.1 0.25 size 1.5 0.1 0.5 name "gw136" }
+  Wall { translation 0.15 6.9 0.25 size 1.5 0.1 0.5 name "gw137" }
+  Wall { translation 6.9 1.65 0.25 size 0.1 1.5 0.5 name "gw138" }
+  Wall { translation 30.15 -11.1 0.25 size 1.5 0.1 0.5 name "gw139" }
+  Wall { translation 33.15 5.4 0.25 size 1.5 0.1 0.5 name "gw140" }
+  Wall { translation 27.15 8.4 0.25 size 1.5 0.1 0.5 name "gw141" }
+  Wall { translation 6.15 -2.1 0.25 size 1.5 0.1 0.5 name "gw142" }
+  Wall { translation 15.15 12.9 0.25 size 1.5 0.1 0.5 name "gw143" }
+  Wall { translation 14.4 -4.35 0.25 size 0.1 1.5 0.5 name "gw144" }
+  Wall { translation 3.9 -4.35 0.25 size 0.1 1.5 0.5 name "gw145" }
+  Wall { translation 36.15 5.4 0.25 size 1.5 0.1 0.5 name "gw146" }
+  Wall { translation 7.65 -3.6 0.25 size 1.5 0.1 0.5 name "gw147" }
+  Wall { translation 27.9 7.65 0.25 size 0.1 1.5 0.5 name "gw148" }
+  Wall { translation 6.9 10.65 0.25 size 0.1 1.5 0.5 name "gw149" }
+  Wall { translation 29.4 4.65 0.25 size 0.1 1.5 0.5 name "gw150" }
+  Wall { translation 1.65 3.9 0.25 size 1.5 0.1 0.5 name "gw151" }
+  Wall { translation 21.9 0.15 0.25 size 0.1 1.5 0.5 name "gw152" }
+  Wall { translation 8.4 0.15 0.25 size 0.1 1.5 0.5 name "gw153" }
+  Wall { translation 27.9 -8.85 0.25 size 0.1 1.5 0.5 name "gw154" }
+  Wall { translation 20.4 3.15 0.25 size 0.1 1.5 0.5 name "gw155" }
+  Wall { translation 34.65 2.4 0.25 size 1.5 0.1 0.5 name "gw156" }
+  Wall { translation 5.4 -7.35 0.25 size 0.1 1.5 0.5 name "gw157" }
+  Wall { translation 11.4 0.15 0.25 size 0.1 1.5 0.5 name "gw158" }
+  Wall { translation 1.65 -8.1 0.25 size 1.5 0.1 0.5 name "gw159" }
+  Wall { translation 18.15 -5.1 0.25 size 1.5 0.1 0.5 name "gw160" }
+  Wall { translation 18.15 12.9 0.25 size 1.5 0.1 0.5 name "gw161" }
+  Wall { translation 30.9 10.65 0.25 size 0.1 1.5 0.5 name "gw162" }
+  Wall { translation 0.15 8.4 0.25 size 1.5 0.1 0.5 name "gw163" }
+  Wall { translation 28.65 2.4 0.25 size 1.5 0.1 0.5 name "gw164" }
+  Wall { translation 29.4 6.15 0.25 size 0.1 1.5 0.5 name "gw165" }
+  Wall { translation 28.65 -9.6 0.25 size 1.5 0.1 0.5 name "gw166" }
+  Wall { translation 10.65 0.9 0.25 size 1.5 0.1 0.5 name "gw167" }
+  Wall { translation 27.9 3.15 0.25 size 0.1 1.5 0.5 name "gw168" }
+  Wall { translation 9.15 9.9 0.25 size 1.5 0.1 0.5 name "gw169" }
+  Wall { translation 11.4 -7.35 0.25 size 0.1 1.5 0.5 name "gw170" }
+  Wall { translation 17.4 13.65 0.25 size 0.1 1.5 0.5 name "gw171" }
+  Wall { translation 6.9 3.15 0.25 size 0.1 1.5 0.5 name "gw172" }
+  Wall { translation 7.65 11.4 0.25 size 1.5 0.1 0.5 name "gw173" }
+  Wall { translation 30.15 -8.1 0.25 size 1.5 0.1 0.5 name "gw174" }
+  Wall { translation 14.4 12.15 0.25 size 0.1 1.5 0.5 name "gw175" }
+  Wall { translation 8.4 -5.85 0.25 size 0.1 1.5 0.5 name "gw176" }
+  Wall { translation 22.65 8.4 0.25 size 1.5 0.1 0.5 name "gw177" }
+  Wall { translation 32.4 1.65 0.25 size 0.1 1.5 0.5 name "gw178" }
+  Wall { translation 4.65 3.9 0.25 size 1.5 0.1 0.5 name "gw179" }
+  Wall { translation 8.4 -10.35 0.25 size 0.1 1.5 0.5 name "gw180" }
+  Wall { translation 24.15 -5.1 0.25 size 1.5 0.1 0.5 name "gw181" }
+  Wall { translation 33.15 11.4 0.25 size 1.5 0.1 0.5 name "gw182" }
+  Wall { translation 16.65 -12.6 0.25 size 40.5 0.1 0.5 name "gw183" }
+  Wall { translation 16.65 14.4 0.25 size 40.5 0.1 0.5 name "gw184" }
+  Wall { translation -3.6 0.9 0.25 size 0.1 27 0.5 name "gw185" }
+  Wall { translation 36.9 0.9 0.25 size 0.1 27 0.5 name "gw186" }
+# ── SECRET DOOR (referee slides it down when the sorting is complete) ──
+DEF DOOR Wall { translation 11.45 6.00 0.25 size 1.40 0.1 0.5 color 0.24 0.26 0.34 name "secret_door" }
+
+# ══════════ cosmetic decor (OUTSIDE the course; non-colliding or well clear) ══════════
+DEF BANNER_N Solid {
+  translation 14.0 10.2 1.15
+  children [
+    Shape { appearance PBRAppearance { baseColor 0.89 0.04 0.07 emissiveColor 0.5 0.02 0.03 emissiveIntensity 0.5 roughness 0.4 metalness 0.1 } geometry Box { size 5.0 0.06 1.1 } }
+    Pose { translation -2.4 0 -0.9 children [ Shape { appearance PBRAppearance { baseColor 0.14 0.14 0.16 roughness 0.5 metalness 0.6 } geometry Box { size 0.08 0.08 1.9 } } ] }
+    Pose { translation  2.4 0 -0.9 children [ Shape { appearance PBRAppearance { baseColor 0.14 0.14 0.16 roughness 0.5 metalness 0.6 } geometry Box { size 0.08 0.08 1.9 } } ] }
+  ]
+  name "banner_n"
+}
+DEF BANNER_S Solid {
+  translation 14.0 -10.2 1.15
+  children [
+    Shape { appearance PBRAppearance { baseColor 0.89 0.04 0.07 emissiveColor 0.5 0.02 0.03 emissiveIntensity 0.5 roughness 0.4 metalness 0.1 } geometry Box { size 5.0 0.06 1.1 } }
+    Pose { translation -2.4 0 -0.9 children [ Shape { appearance PBRAppearance { baseColor 0.14 0.14 0.16 roughness 0.5 metalness 0.6 } geometry Box { size 0.08 0.08 1.9 } } ] }
+    Pose { translation  2.4 0 -0.9 children [ Shape { appearance PBRAppearance { baseColor 0.14 0.14 0.16 roughness 0.5 metalness 0.6 } geometry Box { size 0.08 0.08 1.9 } } ] }
+  ]
+  name "banner_s"
+}
+RubberDuck { translation 2.5 3.6 0 scale 2 name "duck1" }
+RubberDuck { translation 3.5 3.6 0 scale 2 name "duck2" }
+RubberDuck { translation 4.5 3.6 0 scale 2 name "duck3" }
+PlasticCrate { translation 31.8 -3.0 0 name "crate1" }
+PlasticCrate { translation 31.8 -3.0 0.28 name "crate2" }
+PlasticCrate { translation 31.8 -4.4 0 name "crate3" }

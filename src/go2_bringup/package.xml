@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>go2_bringup</name>
+  <version>0.1.0</version>
+  <description>Shared launch files and parameters that start the full Go2 semifinal stack.</description>
+  <maintainer email="you@example.com">you</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>go2_webrtc_bridge</exec_depend>
+  <exec_depend>go2_odometry</exec_depend>
+  <exec_depend>go2_controller</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
