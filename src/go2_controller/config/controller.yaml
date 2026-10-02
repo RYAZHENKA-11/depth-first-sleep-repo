@@ -1,0 +1,32 @@
+go2_controller:
+  ros__parameters:
+    rate_hz: 20.0
+    data_timeout_s: 0.5
+    auto_start: false
+    dry_run: false
+    odom_topic: /odom
+    scan_topic: /scan
+    cmd_vel_topic: /cmd_vel
+    frame_id: odom
+
+    mission:
+      start_delay_s: 1.0
+      detect_dist: 1.5
+      detect_half_width: 0.5
+      outbound_max_dist: 8.0
+      obstacle_max_depth: 1.5
+      pass_margin: 0.8
+      finish_tol: 0.3
+      blocked_timeout_s: 3.0
+      max_recoveries: 3
+      mission_timeout_s: 180.0
+      side_hint: 0
+
+    planner:
+      cruise_vx: 0.35
+      slow_vx: 0.15
+      max_wz: 0.8
+      side_clearance: 0.15
+      stop_clearance: 0.25
+      slow_dist: 1.2
+      max_accel: 0.5
