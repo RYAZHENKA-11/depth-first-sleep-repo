@@ -14,11 +14,15 @@ setup(
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'config'),
          glob('config/*.yaml')),
+        (os.path.join('share', package_name, 'launch'),
+         glob('launch/*.launch.py')),
     ],
     install_requires=['setuptools'],
+    extras_require={'test': ['pytest']},
     zip_safe=True,
     entry_points={
         'console_scripts': [
+            'odometry_node = go2_odometry.odometry_node:main',
         ],
     },
 )
