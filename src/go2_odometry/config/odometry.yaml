@@ -1,0 +1,21 @@
+go2_odometry:
+  ros__parameters:
+    pose_topic: "/go2/odom/robot_pose"
+    twist_topic: "/go2/odom/sport_lf"
+    imu_topic: "/go2/imu/data"
+    cloud_topic: "/go2/lidar/points"
+    odom_topic: "/odom"
+    scan_topic: "/scan"
+    odom_frame: "odom"
+    base_frame: "base_link"
+    data_timeout_s: 0.5
+    scan_rate_hz: 10.0
+    beam_count: 360
+    range_min: 0.05
+    range_max: 10.0
+    min_obstacle_height: 0.08
+    max_obstacle_height: 1.5
+    body_half_length: 0.40
+    body_half_width: 0.205
+    body_height: 0.65
+    odom_jump_warn_m: 0.3
